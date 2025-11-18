@@ -1,0 +1,995 @@
+{
+  "name": "Agente de IA - Marmitas",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "aa557cdc-4c76-419a-a9a7-ea4f052c6d31",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -304,
+        -112
+      ],
+      "id": "0577b421-b7f3-4229-afc4-22195be8ed0b",
+      "name": "Webhook",
+      "webhookId": "aa557cdc-4c76-419a-a9a7-ea4f052c6d31"
+    },
+    {
+      "parameters": {
+        "operation": "push",
+        "list": "={{ $('Webhook').item.json.body.sessionId }}",
+        "messageData": "={{ $('Webhook').item.json.body.messages }}",
+        "tail": true
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        496,
+        -96
+      ],
+      "id": "ee85d74f-4891-402e-ab9d-10620bdb2a0c",
+      "name": "Push message buffer",
+      "credentials": {
+        "redis": {
+          "id": "jXjgkylCV7cMjats",
+          "name": "Redis - Porto_Oficial"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "key": "={{ $('Webhook').item.json.body.sessionId }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -272,
+        192
+      ],
+      "id": "23c82220-eae1-4e48-a7d9-0e442ef179a6",
+      "name": "Redis1",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "credentials": {
+        "redis": {
+          "id": "jXjgkylCV7cMjats",
+          "name": "Redis - Porto_Oficial"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Webhook').item.json.body.timestamp }}",
+                    "rightValue": "={{ $now.minus({ seconds: 10 }).toUTC().toISO() }}",
+                    "operator": {
+                      "type": "dateTime",
+                      "operation": "before"
+                    },
+                    "id": "63150e78-543f-410d-92bf-d8d96fd7f73d"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Prosseguir"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        80,
+        192
+      ],
+      "id": "1f69fc7c-e82c-4336-a589-0a2f98e5c8b9",
+      "name": "Switch1"
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "={{ $('Webhook').item.json.body.sessionId }}"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        464,
+        112
+      ],
+      "id": "074fd2ef-51fc-4cba-bb48-276186bcbd9a",
+      "name": "Redis2",
+      "credentials": {
+        "redis": {
+          "id": "jXjgkylCV7cMjats",
+          "name": "Redis - Porto_Oficial"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "Atendimento",
+        "key": "={{ $json.body.sessionId }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -96,
+        -112
+      ],
+      "id": "ec3df00d-1b6b-4f6d-bb83-a45377ec2026",
+      "name": "Get timeout atendimento",
+      "credentials": {
+        "redis": {
+          "id": "jXjgkylCV7cMjats",
+          "name": "Redis - Porto_Oficial"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4ef0871b-0606-4c9d-908b-21812001a0be",
+              "leftValue": "={{ $json.Atendimento[0] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        80,
+        -112
+      ],
+      "id": "f81955d6-be8c-4a68-b1a4-3410742693d1",
+      "name": "If",
+      "retryOnFail": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4ef0871b-0606-4c9d-908b-21812001a0be",
+              "leftValue": "={{ $json.Atendimento }}",
+              "rightValue": "",
+              "operator": {
+                "type": "array",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        288,
+        -112
+      ],
+      "id": "5b2cf739-55bf-4317-a324-4f2eb941f161",
+      "name": "If1",
+      "retryOnFail": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "content": "# Recebe & Concatena\n",
+        "height": 720,
+        "width": 1440,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -352,
+        -208
+      ],
+      "id": "35ed3af6-4eeb-4ace-a4e6-48a01035e31b",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "# Sepração e envio de mensagem\n",
+        "height": 720,
+        "width": 1264,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2032,
+        -208
+      ],
+      "id": "a1c156ab-bee7-4cbd-b8a2-5a9586eb514f",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {
+          "responseFormat": "text",
+          "temperature": 0.1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1232,
+        304
+      ],
+      "id": "a530cf6f-72dc-4d78-baa1-a20fc3559a81",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "bzVNVZJZ0UHMt0VJ",
+          "name": "Colégio Porto OFC"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "9bc2b0d8-c3d5-456a-b7eb-301b1a193595",
+      "name": "OpenAI1",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        2112,
+        320
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "bzVNVZJZ0UHMt0VJ",
+          "name": "Colégio Porto OFC"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "f8683b23-17e3-4fc8-b222-4bc9bf68da14",
+      "name": "Loop Over Items1",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2720,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"messages\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"required\": [\"messages\"]\n}"
+      },
+      "id": "2149f3e7-14fd-4a97-a060-e8bb0ad3ebae",
+      "name": "OutputParser1",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        2368,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Whatsapp message to be splitted and formated: {{ $json.output }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=Por favor, gere a saída no seguinte formato JSON:\n{\n  \"messages\": [\n    \"splitedMessage\",\n    \"splitedMessage\",\n    \"splitedMessage\"\n  ]\n}\n\n\nEsse prompt é para um agente de IA que separa as mensagens de uma marmitaria para serem enviadas quebradas, ajuste esse prompt para que se a mensagem for o cardapio não deve ser enviada quebrada\n\nAs mensagens devem ser divididas de forma natural, afinal estamos conversando com um humano, não é mesmo?\n\nCertifique-se de que a resposta siga exatamente essa estrutura, incluindo os colchetes e as aspas.\n\n### Jamais separe uma mensagem vazia.\n\n### Sempre que tiver um link envie ele de forma separada sem alteração\n\n### Certifique-se de que a resposta siga exatamente essa estrutura abaixo, deixando somente entre '' para negrito e nunca fugindo das demais regras de markdown do whatsapp:\n\t\t\t- *negrito (substitua '' por '*')\n\t\t\t- tachado (caso seja algo que foi excluído ou alterado)\n\t\t\t- itálico.(extremamente raro)\n            - link (usar sempre em todos os links)"
+            }
+          ]
+        }
+      },
+      "id": "9398bfcd-7224-447f-9cef-99d0bfc3fca4",
+      "name": "Parser  Chain",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        2160,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "output.messages",
+        "options": {
+          "destinationFieldName": "output"
+        }
+      },
+      "id": "e62afda2-d8f3-4438-8efa-ce0405fc3ae8",
+      "name": "Split de Mensagem",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        2512,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3072,
+        256
+      ],
+      "id": "e42df6d7-99c8-4154-b7c8-6318a0ab00f9",
+      "name": "2 segundos de espera1",
+      "webhookId": "a787d35c-e58f-491a-be87-144594b9e6a8"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "03af7943-e972-4408-92bd-9b59eb4a22b8",
+              "leftValue": "={{ $json.output.length }}",
+              "rightValue": 230,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            },
+            {
+              "id": "c9c0fa2f-8b18-4244-ae76-1a106c6c1f57",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "cardápio",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "4d268370-8c9b-4aa1-9432-a46100cdaf79",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "pedido",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1728,
+        0
+      ],
+      "id": "6e14ed53-0e36-43a8-901d-2929c6a0c1d9",
+      "name": "splita ou não1"
+    },
+    {
+      "parameters": {
+        "content": "# Bot",
+        "height": 720,
+        "width": 900,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1104,
+        -208
+      ],
+      "id": "92cccbd2-f871-4807-8410-b87a076c7c79",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Webhook').item.json.body.sessionId }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        1472,
+        320
+      ],
+      "id": "f2e33661-fd3b-4d61-89af-9b7dd2c3eaad",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://gdfrukahixtsgjdtzvnl.supabase.co/functions/v1/n8n-webhook",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"sessionId\": \"{{ $('Webhook').item.json.body.sessionId }}\",\n  \"messages\": {{ JSON.stringify($json.output) }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2176,
+        -16
+      ],
+      "id": "9b89b772-cd19-4070-9ba3-9a4114695b82",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://gdfrukahixtsgjdtzvnl.supabase.co/functions/v1/n8n-webhook",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"sessionId\": \"{{ $('Webhook').item.json.body.sessionId }}\",\n  \"messages\":\"{{ $json.output }}\"\n}\n ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2880,
+        256
+      ],
+      "id": "d3dba7b4-8027-467c-83d9-258303a12525",
+      "name": "HTTP Request1",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "options": {
+          "systemMessage": "=# Agente de IA - Marmitaria da Casa\n\n## Objetivo:\nO objetivo deste agente de IA é realizar vendas de marmitas de maneira eficiente e personalizada. O cliente poderá escolher entre 5 tipos de marmitas, fazer alterações personalizadas, como trocar ingredientes (sem custo adicional), e adicionar até 2 ingredientes extras, com custo extra. O agente confirma o pedido antes de finalizar a conversa.\n\n## Regras de Atendimento:\n- **Foco no cardápio**: O agente **não** deve sair do contexto relacionado às marmitas e seus adicionais. O atendimento é exclusivo para a venda e personalização das marmitas.\n- **Respostas limitadas**: O agente **não responderá sobre outros assuntos** que não sejam relacionados diretamente ao pedido de marmitas ou alterações específicas no cardápio.\n- **Preços fixos**: O agente **não aceitará pedidos** com valores diferentes dos do cardápio. Qualquer valor fora do estabelecido será rejeitado.\n- **Limitação de adicionais**: O cliente pode adicionar **até 2 ingredientes extras** por marmita, sendo cobrados R$ 4,00 por proteína e R$ 2,00 por carboidrato. **Trocas de ingredientes** (como arroz por macarrão) **não geram custo adicional**.\n- **Confirmação de pedido**: Antes de finalizar, o agente sempre confirmará o pedido completo com os valores totais.\n\n## Cardápio:\n\n1. **Marmita Clássica** - R$ 22,90  \n   **Descrição**: Arroz, feijão, frango grelhado, salada de alface, tomate e cenoura.  \n   **Adicionais** (opcionais):\n   - **Proteína (R$ 4,00)**: Adicionar ovo ou carne de boi.\n   - **Carboidrato (R$ 2,00)**: Adicionar macarrão ou trocar arroz por batata doce.\n\n2. **Marmita Fitness** - R$ 24,90  \n   **Descrição**: Arroz integral, peito de frango grelhado, legumes no vapor, salada de folhas verdes.  \n   **Adicionais** (opcionais):\n   - **Proteína (R$ 4,00)**: Adicionar ovo ou carne de boi.\n   - **Carboidrato (R$ 2,00)**: Adicionar macarrão ou trocar arroz integral por quinoa.\n\n3. **Marmita Nordestina** - R$ 27,90  \n   **Descrição**: Arroz, feijão verde, carne de sol desfiada, macaxeira (aipim) frita, salada de cebola e coentro.  \n   **Adicionais** (opcionais):\n   - **Proteína (R$ 4,00)**: Adicionar frango grelhado.\n   - **Carboidrato (R$ 2,00)**: Adicionar batata doce ou trocar arroz por arroz integral.\n\n4. **Marmita Veggie** - R$ 23,90  \n   **Descrição**: Arroz integral, feijão preto, legumes grelhados (berinjela, abobrinha e pimentão), salada de folhas.  \n   **Adicionais** (opcionais):\n   - **Proteína (R$ 4,00)**: Adicionar tofu ou falafel.\n   - **Carboidrato (R$ 2,00)**: Adicionar quinoa ou trocar arroz integral por batata doce.\n\n5. **Marmita Executiva** - R$ 26,90  \n   **Descrição**: Arroz, feijão, bife acebolado, batata frita, salada de rúcula com tomate cereja.  \n   **Adicionais** (opcionais):\n   - **Proteína (R$ 4,00)**: Adicionar filé mignon ou ovo.\n   - **Carboidrato (R$ 2,00)**: Adicionar batata doce frita ou trocar arroz por macarrão.\n\n## Personalização de Pedidos:\n- **Trocas**: Trocar ingredientes, como arroz por macarrão ou feijão por legumes, **não gera custo adicional**.\n- **Adicionais**: O cliente pode adicionar **até 2 ingredientes extras** por marmita. A cobrança será:\n  - **Proteína** (R$ 4,00 por item): Exemplo: adicionar ovo, carne de boi ou tofu.\n  - **Carboidrato** (R$ 2,00 por item): Exemplo: adicionar batata doce, quinoa ou trocar arroz por macarrão.\n\n## Fluxo de Conversa:\n\n1. **Agente**: Olá, seja bem-vindo à Marmitaria da Casa! Aqui está o nosso cardápio, com algumas opções deliciosas para você escolher:\n    - Marmita Clássica - R$ 22,90\n    - Marmita Fitness - R$ 24,90\n    - Marmita Nordestina - R$ 27,90\n    - Marmita Veggie - R$ 23,90\n    - Marmita Executiva - R$ 26,90\n\n    Além disso, você pode adicionar até 2 itens extras à sua marmita, como proteínas e carboidratos. Os adicionais têm o seguinte valor:\n    - Proteína: R$ 4,00\n    - Carboidrato: R$ 2,00\n\n    Qual dessas você gostaria de pedir?\n\n2. **Cliente**: Eu gostaria da Marmita Fitness, por favor.\n\n3. **Agente**: Marmita Fitness confirmada! Agora, você gostaria de adicionar algum ingrediente extra ou fazer alguma alteração? Lembre-se que você pode adicionar até 2 itens extras, como proteínas ou carboidratos.\n\n4. **Cliente**: Quero trocar o arroz integral por arroz normal e adicionar ovo.\n\n5. **Agente**: Seu pedido ficou assim:\n   - Marmita Fitness com arroz normal e ovo.\n   - Valor da Marmita: R$ 24,90\n   - Adicional (Ovo): R$ 4,00\n\n   Totalizando **R$ 28,90**. Está tudo certo para finalizar?\n\n6. **Cliente**: Sim, pode finalizar.\n\n7. **Agente**: Pedido confirmado! Sua Marmita Fitness será preparada conforme solicitado. Logo entraremos em contato para informar o status da entrega. Muito obrigado!\n\n---\n\n**Nota**: Esse fluxo pode ser configurado diretamente no N8N, utilizando a integração com ferramentas de CRM ou plataformas de pagamento para registrar o pedido e gerar confirmações automáticas para o cliente.\n\n\nOBS: Não coloque os caracteres * e # nas mensagens enviadas para os clientes\n\n---\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        1376,
+        0
+      ],
+      "id": "92513ce6-3622-40e1-a4df-4cd2a0653515",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        1856,
+        304
+      ],
+      "id": "d2b90cd9-ab4b-40e8-b7f0-9a150410bce2",
+      "name": "Calculator"
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        464,
+        288
+      ],
+      "id": "fbddb209-9f7a-41d0-ac7e-b625ba1ed883",
+      "name": "10 segundos",
+      "webhookId": "6a3dc591-db73-41ef-802e-212e7ab95c92"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "bd676b02-338b-4adf-9bf6-7573fd30c1fd",
+              "leftValue": "={{ $json.propertyName }}",
+              "rightValue": "",
+              "operator": {
+                "type": "array",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "157c9da1-a930-4625-8e7e-5d000c28aff2",
+      "name": "Filtra \"Text\"",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6f57fd7d-92da-48c1-8a97-532b7f434888",
+              "name": "text",
+              "value": "={{ $json.propertyName.map(value => typeof value === 'object' ? value.content : value).join('\\n') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f7033200-f997-4030-a1a0-a8f5a9f4c70f",
+      "name": "Grava variável \"text\".",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        880,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "17eT6Z9CG_o8F1r7yv8TZkjZo0XOpEzU_vQzeRGD4cqk",
+          "mode": "list",
+          "cachedResultName": "Pedidos de marmitas",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17eT6Z9CG_o8F1r7yv8TZkjZo0XOpEzU_vQzeRGD4cqk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Página1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17eT6Z9CG_o8F1r7yv8TZkjZo0XOpEzU_vQzeRGD4cqk/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ID do pedido": "={{ $('Webhook').item.json.body.sessionId }}",
+            "Itens escolhidos": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Itens_escolhidos', `Marmitas escolhidas`, 'string') }}",
+            "Alterações personalizadas ": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Altera__es_personalizadas_', `Todas as personalizações de marmitas (sem salada, trocar arroz por macarrão, etc)`, 'string') }}",
+            "Valor total": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Valor_total', `Valor total do pedido`, 'string') }}",
+            "Status do pedido": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Status_do_pedido', `Status se o cliente confirmou o pedido`, 'string') }}"
+          },
+          "matchingColumns": [
+            "ID do pedido"
+          ],
+          "schema": [
+            {
+              "id": "ID do pedido",
+              "displayName": "ID do pedido",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Itens escolhidos",
+              "displayName": "Itens escolhidos",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Alterações personalizadas ",
+              "displayName": "Alterações personalizadas ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Valor total",
+              "displayName": "Valor total",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status do pedido",
+              "displayName": "Status do pedido",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        1696,
+        304
+      ],
+      "id": "fb0b7732-57b5-4818-90f0-4b6b9b13c491",
+      "name": "Append or update row in sheet in Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "yK0CYo9mO3dNKbYm",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get timeout atendimento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Push message buffer": {
+      "main": [
+        [
+          {
+            "node": "Redis1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis1": {
+      "main": [
+        [
+          {
+            "node": "Switch1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch1": {
+      "main": [
+        [
+          {
+            "node": "Redis2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "10 segundos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get timeout atendimento": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Push message buffer",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Push message buffer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis2": {
+      "main": [
+        [
+          {
+            "node": "Filtra \"Text\"",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Parser  Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OutputParser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Parser  Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parser  Chain": {
+      "main": [
+        [
+          {
+            "node": "Split de Mensagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split de Mensagem": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2 segundos de espera1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "splita ou não1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Parser  Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "2 segundos de espera1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "splita ou não1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "10 segundos": {
+      "main": [
+        [
+          {
+            "node": "Redis1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtra \"Text\"": {
+      "main": [
+        [
+          {
+            "node": "Grava variável \"text\".",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Grava variável \"text\".": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet in Google Sheets": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "53d414f2-1aa7-44fe-920f-1a6cfc07138c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "811be85ea27d07f76fc841e79144bfd948683ae31df7f40abf0839233b485d4d"
+  },
+  "id": "jiQUYSCQxb5KvPJf",
+  "tags": []
+}
